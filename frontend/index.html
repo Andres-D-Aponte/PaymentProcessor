@@ -1,55 +1,147 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment System</title>
+    <title>Sistema de Pagos</title>
     <link rel="stylesheet" href="styles/base.css">
     <script type="module" src="js/main.js"></script>
 </head>
 <body>
     <div class="theme-selector">
         <select id="themeSelect">
-            <option value="light">Light Theme</option>
-            <option value="dark">Dark Theme</option>
-            <option value="blue">Light Blue Theme</option>
+            <option value="light">Tema Claro</option>
+            <option value="dark">Tema Oscuro</option>
+            <option value="blue">Tema Azul Claro</option>
         </select>
     </div>
     <div class="container">
         <div class="payment-history">
-            <h2>Payment History</h2>
-            <div id="paymentsList"></div>
-            <button id="newPayment" class="primary-button">New Payment</button>
+            <h2>Historial de Pagos</h2>
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Monto Original</th>
+                        <th>Monto Final</th>
+                        <th>Método de Pago</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentsTableBody"></tbody>
+            </table>
+            <div class="pagination-controls">
+                <div class="page-size-selector">
+                    <label for="pageSize">Mostrar:</label>
+                    <select id="pageSize">
+                        <option value="4">4</option>
+                        <option value="8">8</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                    </select>
+                </div>
+                <div class="pagination-buttons" id="paginationButtons"></div>
+            </div>
+            <button id="newPayment" class="primary-button">Nuevo Pago</button>
         </div>
         <div id="paymentFormContainer" class="payment-form" style="display: none;">
-            <h2>Payment Processing</h2>
+            <h2>Procesamiento de Pago</h2>
             <form id="paymentForm">
                 <div class="form-group">
-                    <label for="amount">Amount ($):</label>
+                    <label for="amount">Monto ($):</label>
                     <input type="number" id="amount" required min="0" step="0.01">
                 </div>
                 <div class="form-group">
-                    <label for="paymentMethod">Payment Method:</label>
+                    <label for="paymentMethod">Método de Pago:</label>
                     <select id="paymentMethod" required>
-                        <option value="CREDIT_CARD">Credit Card</option>
-                        <option value="DEBIT_CARD">Debit Card</option>
+                        <option value="CREDIT_CARD">Tarjeta de Crédito</option>
+                        <option value="DEBIT_CARD">Tarjeta de Débito</option>
                         <option value="PAYPAL">PayPal</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="email">Email for Notification:</label>
+                    <label for="email">Email para Notificación:</label>
                     <input type="email" id="email">
                 </div>
                 <div class="form-group">
-                    <label for="phone">Phone for SMS:</label>
+                    <label for="phone">Teléfono para SMS:</label>
                     <input type="tel" id="phone">
                 </div>
                 <div class="button-group">
-                    <button type="submit" class="primary-button">Process Payment</button>
-                    <button type="button" id="cancelPayment" class="secondary-button">Cancel</button>
+                    <button type="submit" class="primary-button">Procesar Pago</button>
+                    <button type="button" id="cancelPayment" class="secondary-button">Cancelar</button>
                 </div>
             </form>
             <div id="result" class="result-panel"></div>
+            <div id="notificationStatus"></div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- PDF Configuration Modal -->
+    <div id="pdfConfigModal" class="modal">
+        <div class="modal-content">
+            <h2>Configuración del PDF</h2>
+            <form id="pdfConfigForm">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="includeLogo" onchange="window.paymentUI.toggleLogoUpload()">
+                        Incluir Logo
+                    </label>
+                    <div id="logoUpload" class="logo-upload">
+                        <input type="file" id="logoFile" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="pdfTitle">Título del Reporte:</label>
+                    <input type="text" id="pdfTitle" value="Comprobante de Pago">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="includePaymentDetails" checked>
+                        Incluir Detalles del Pago
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="includeUserInfo" checked>
+                        Incluir Información del Usuario
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="pdfTheme">Tema:</label>
+                    <select id="pdfTheme">
+                        <option value="LIGHT">Claro</option>
+                        <option value="DARK">Oscuro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="includeTimestamp" checked>
+                        Mostrar Fecha y Hora
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="footerMessage">Mensaje de Pie de Página:</label>
+                    <input type="text" id="footerMessage" value="Gracias por su pago">
+                </div>
+                <div class="form-group">
+                    <label for="pdfFormat">Formato:</label>
+                    <select id="pdfFormat">
+                        <option value="A4">A4</option>
+                        <option value="LETTER">Carta</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="primary-button">Generar PDF</button>
+                    <button type="button" class="secondary-button" onclick="window.paymentUI.closePdfConfigModal()">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 </body>
